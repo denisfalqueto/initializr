@@ -92,6 +92,7 @@ public class SourceStructure {
 	 */
 	public Path createSourceFile(String packageName, String fileName) throws IOException {
 		Path sourceFile = resolveSourceFile(packageName, fileName);
+		checkInsideRootDirectory(sourceFile);
 		createFile(sourceFile);
 		return sourceFile;
 	}
@@ -118,8 +119,17 @@ public class SourceStructure {
 	 */
 	public Path createResourceFile(String packageName, String file) throws IOException {
 		Path resourceFile = resolveResourceFile(packageName, file);
+		checkInsideRootDirectory(resourceFile);
 		createFile(resourceFile);
 		return resourceFile;
+	}
+
+	private void checkInsideRootDirectory(Path file) {
+		Path normalizedFile = file.normalize();
+		if (!normalizedFile.startsWith(this.rootDirectory.normalize())) {
+			throw new IllegalArgumentException(
+					"File '%s' must be inside the project root directory".formatted(normalizedFile));
+		}
 	}
 
 	private void createFile(Path file) throws IOException {

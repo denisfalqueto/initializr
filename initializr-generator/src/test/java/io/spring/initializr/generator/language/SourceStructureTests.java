@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link SourceStructure}.
@@ -56,6 +57,22 @@ class SourceStructureTests {
 	}
 
 	@Test
+	void createSourceFileRejectsPathTraversal(@TempDir Path dir) {
+		SourceStructure sourceStructure = new SourceStructure(dir.resolve("src/main"), JAVA_LANGUAGE);
+		assertThatIllegalArgumentException()
+			.isThrownBy(() -> sourceStructure.createSourceFile("com.example", "../../../../outside"))
+			.withMessageContaining("must be inside the project root directory");
+	}
+
+	@Test
+	void createSourceFileRejectsPathTraversalViaPackageName(@TempDir Path dir) {
+		SourceStructure sourceStructure = new SourceStructure(dir.resolve("src/main"), JAVA_LANGUAGE);
+		assertThatIllegalArgumentException()
+			.isThrownBy(() -> sourceStructure.createSourceFile("../../../../outside", "Test"))
+			.withMessageContaining("must be inside the project root directory");
+	}
+
+	@Test
 	void resolveSourceWithPath(@TempDir Path dir) {
 		SourceStructure sourceStructure = new SourceStructure(dir.resolve("src/main"), JAVA_LANGUAGE);
 		Path configFile = sourceStructure.getSourcesDirectory().resolve("com/example/specific.xml");
@@ -80,6 +97,22 @@ class SourceStructureTests {
 		SourceStructure sourceStructure = new SourceStructure(dir.resolve("src/main"), JAVA_LANGUAGE);
 		Path path = sourceStructure.createResourceFile("com.example", "test.properties");
 		assertThat(path).exists().isRegularFile().isEqualByComparingTo(target);
+	}
+
+	@Test
+	void createResourceFileRejectsPathTraversal(@TempDir Path dir) {
+		SourceStructure sourceStructure = new SourceStructure(dir.resolve("src/main"), JAVA_LANGUAGE);
+		assertThatIllegalArgumentException()
+			.isThrownBy(() -> sourceStructure.createResourceFile("com.example", "../../../../outside.xml"))
+			.withMessageContaining("must be inside the project root directory");
+	}
+
+	@Test
+	void createResourceFileRejectsPathTraversalViaPackageName(@TempDir Path dir) {
+		SourceStructure sourceStructure = new SourceStructure(dir.resolve("src/main"), JAVA_LANGUAGE);
+		assertThatIllegalArgumentException()
+			.isThrownBy(() -> sourceStructure.createResourceFile("../../../../outside", "test.xml"))
+			.withMessageContaining("must be inside the project root directory");
 	}
 
 	@Test
