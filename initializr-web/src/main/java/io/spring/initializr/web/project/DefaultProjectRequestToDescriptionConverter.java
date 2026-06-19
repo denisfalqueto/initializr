@@ -119,12 +119,24 @@ public class DefaultProjectRequestToDescriptionConverter
 	}
 
 	private void validate(ProjectRequest request, InitializrMetadata metadata) {
+		validateBaseDir(request);
 		validatePlatformVersion(request, metadata);
 		validateType(request.getType(), metadata);
 		validateLanguage(request.getLanguage(), metadata);
 		validateConfigurationFileFormat(request.getConfigurationFileFormat(), metadata);
 		validatePackaging(request.getPackaging(), metadata);
 		validateDependencies(request, metadata);
+	}
+
+	private void validateBaseDir(ProjectRequest request) {
+		String baseDir = request.getBaseDir();
+		if (baseDir == null) {
+			return;
+		}
+		if (baseDir.contains("/") || baseDir.contains("\\") || baseDir.contains("..")) {
+			throw new InvalidProjectRequestException(
+					"Invalid baseDir '%s': must not contain path separators or '..'".formatted(baseDir));
+		}
 	}
 
 	private void validatePlatformVersion(ProjectRequest request, InitializrMetadata metadata) {

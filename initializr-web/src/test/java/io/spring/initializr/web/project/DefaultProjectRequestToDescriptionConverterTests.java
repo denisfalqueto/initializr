@@ -80,6 +80,50 @@ class DefaultProjectRequestToDescriptionConverterTests {
 	}
 
 	@Test
+	void convertWhenBaseDirContainsPathSeparatorShouldThrowException() {
+		ProjectRequest request = createProjectRequest();
+		request.setBaseDir("my/project");
+		assertThatExceptionOfType(InvalidProjectRequestException.class)
+			.isThrownBy(() -> this.converter.convert(request, this.metadata))
+			.withMessageContaining("Invalid baseDir 'my/project'");
+	}
+
+	@Test
+	void convertWhenBaseDirContainsWindowsPathSeparatorShouldThrowException() {
+		ProjectRequest request = createProjectRequest();
+		request.setBaseDir("my\\project");
+		assertThatExceptionOfType(InvalidProjectRequestException.class)
+			.isThrownBy(() -> this.converter.convert(request, this.metadata))
+			.withMessageContaining("Invalid baseDir 'my\\project'");
+	}
+
+	@Test
+	void convertWhenBaseDirContainsDotDotShouldThrowException() {
+		ProjectRequest request = createProjectRequest();
+		request.setBaseDir("../dirup");
+		assertThatExceptionOfType(InvalidProjectRequestException.class)
+			.isThrownBy(() -> this.converter.convert(request, this.metadata))
+			.withMessageContaining("Invalid baseDir '../dirup'");
+	}
+
+	@Test
+	void convertWhenBaseDirIsExactlyDotDotShouldThrowException() {
+		ProjectRequest request = createProjectRequest();
+		request.setBaseDir("..");
+		assertThatExceptionOfType(InvalidProjectRequestException.class)
+			.isThrownBy(() -> this.converter.convert(request, this.metadata))
+			.withMessageContaining("Invalid baseDir '..'");
+	}
+
+	@Test
+	void convertWhenBaseDirIsValidShouldSetBaseDirectory() {
+		ProjectRequest request = createProjectRequest();
+		request.setBaseDir("my-project");
+		ProjectDescription description = this.converter.convert(request, this.metadata);
+		assertThat(description.getBaseDirectory()).isEqualTo("my-project");
+	}
+
+	@Test
 	void convertWhenTypeIsInvalidShouldThrowException() {
 		ProjectRequest request = createProjectRequest();
 		request.setType("foo-build");
