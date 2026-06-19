@@ -88,12 +88,16 @@ public class InitializrConfiguration {
 			result = result + "Application";
 		}
 		String candidate = StringUtils.capitalize(result);
-		if (hasInvalidChar(candidate) || this.env.invalidApplicationNames.contains(candidate)) {
-			return this.env.fallbackApplicationName;
-		}
-		else {
-			return candidate;
-		}
+		return (isValidApplicationName(candidate)) ? candidate : this.env.fallbackApplicationName;
+	}
+
+	/**
+	 * Checks whether the given name is a valid application name.
+	 * @param name the name to check
+	 * @return whether the name is a valid application name
+	 */
+	public boolean isValidApplicationName(String name) {
+		return !hasInvalidChar(name) && !this.env.invalidApplicationNames.contains(name);
 	}
 
 	/**

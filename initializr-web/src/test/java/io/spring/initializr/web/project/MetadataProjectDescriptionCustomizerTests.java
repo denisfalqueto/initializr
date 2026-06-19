@@ -23,6 +23,7 @@ import io.spring.initializr.metadata.InitializrMetadata;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * Tests for {@link MetadataProjectDescriptionCustomizer}.
@@ -32,6 +33,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MetadataProjectDescriptionCustomizerTests {
 
 	private final InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults().build();
+
+	@Test
+	void customizeShouldPassThroughValidExplicitApplicationName() {
+		MutableProjectDescription description = new MutableProjectDescription();
+		description.setApplicationName("MyApp");
+		assertThat(customize(description).getApplicationName()).isEqualTo("MyApp");
+	}
+
+	@Test
+	void customizeShouldRejectExplicitApplicationNameWithInvalidChars() {
+		MutableProjectDescription description = new MutableProjectDescription();
+		description.setApplicationName("My App!");
+		assertThatExceptionOfType(InvalidProjectRequestException.class).isThrownBy(() -> customize(description))
+			.withMessageContaining("Invalid applicationName 'My App!'");
+	}
+
+	@Test
+	void customizeShouldRejectExplicitApplicationNameWithPathSeparator() {
+		MutableProjectDescription description = new MutableProjectDescription();
+		description.setApplicationName("com/example/something");
+		assertThatExceptionOfType(InvalidProjectRequestException.class).isThrownBy(() -> customize(description))
+			.withMessageContaining("Invalid applicationName");
+	}
 
 	@Test
 	void customizeShouldUseDefaultApplicationNameFromMetadata() {

@@ -125,6 +125,21 @@ class InitializrConfigurationTests {
 	}
 
 	@Test
+	void nameShouldBeValid() {
+		assertThat(this.properties.isValidApplicationName("DemoApplication")).isTrue();
+	}
+
+	@Test
+	void nameShouldBeInvalid() {
+		assertThat(this.properties.isValidApplicationName("1DemoApplication")).isFalse();
+		assertThat(this.properties.isValidApplicationName("Demo|Application")).isFalse();
+		assertThat(this.properties.isValidApplicationName("com/example/Something")).isFalse();
+		assertThat(this.properties.isValidApplicationName("../../../etc/Something")).isFalse();
+		assertThat(this.properties.isValidApplicationName("SpringApplication")).isFalse();
+		assertThat(this.properties.isValidApplicationName("SpringBootApplication")).isFalse();
+	}
+
+	@Test
 	void generatePackageNameSimple() {
 		assertThat(this.properties.cleanPackageName("com.foo", JAVA, "com.example")).isEqualTo("com.foo");
 	}

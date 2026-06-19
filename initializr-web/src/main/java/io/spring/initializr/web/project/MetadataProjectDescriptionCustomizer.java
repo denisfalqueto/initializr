@@ -46,7 +46,13 @@ public class MetadataProjectDescriptionCustomizer implements ProjectDescriptionC
 
 	@Override
 	public void customize(MutableProjectDescription description) {
-		if (!StringUtils.hasText(description.getApplicationName())) {
+		if (StringUtils.hasText(description.getApplicationName())) {
+			if (!this.metadata.getConfiguration().isValidApplicationName(description.getApplicationName())) {
+				throw new InvalidProjectRequestException(
+						"Invalid applicationName '%s'".formatted(description.getApplicationName()));
+			}
+		}
+		else {
 			String name = StringUtils.hasText(description.getName()) ? description.getName()
 					: description.getArtifactId();
 			description.setApplicationName(this.metadata.getConfiguration().generateApplicationName(name));
