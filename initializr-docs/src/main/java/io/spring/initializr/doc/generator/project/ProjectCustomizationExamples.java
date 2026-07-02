@@ -16,12 +16,14 @@
 
 package io.spring.initializr.doc.generator.project;
 
+import io.spring.initializr.generator.buildsystem.SourceSet;
 import io.spring.initializr.generator.buildsystem.gradle.GradleBuild;
 import io.spring.initializr.generator.buildsystem.gradle.GradleBuildSystem;
 import io.spring.initializr.generator.condition.ConditionalOnBuildSystem;
 import io.spring.initializr.generator.condition.ConditionalOnPackaging;
 import io.spring.initializr.generator.packaging.war.WarPackaging;
 import io.spring.initializr.generator.spring.build.BuildCustomizer;
+import io.spring.initializr.generator.spring.properties.ApplicationPropertiesCustomizer;
 
 import org.springframework.context.annotation.Bean;
 
@@ -40,5 +42,19 @@ public class ProjectCustomizationExamples {
 		return (build) -> build.plugins().add("war");
 	}
 	// end::war-plugin-contributor[]
+
+	// tag::application-properties-customizer[]
+	@Bean
+	public ApplicationPropertiesCustomizer applicationPropertiesContributor() {
+		return (properties) -> {
+			// src/main/resources/application.properties (or .yaml)
+			properties.add("spring.application.name", "acme");
+			// src/test/resources/application.properties
+			properties.section(SourceSet.TEST).add("spring.datasource.url", "jdbc:h2:mem:acme");
+			// src/main/resources/application-dev.properties
+			properties.section(SourceSet.MAIN, "dev").add("logging.level.root", "DEBUG");
+		};
+	}
+	// end::application-properties-customizer[]
 
 }
