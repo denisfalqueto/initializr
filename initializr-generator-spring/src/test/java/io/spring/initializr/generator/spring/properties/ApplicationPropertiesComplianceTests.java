@@ -19,6 +19,7 @@ package io.spring.initializr.generator.spring.properties;
 import java.util.stream.Stream;
 
 import io.spring.initializr.generator.buildsystem.BuildSystem;
+import io.spring.initializr.generator.buildsystem.SourceSet;
 import io.spring.initializr.generator.buildsystem.maven.MavenBuildSystem;
 import io.spring.initializr.generator.configuration.format.ConfigurationFileFormat;
 import io.spring.initializr.generator.configuration.format.properties.PropertiesFormat;
@@ -27,6 +28,7 @@ import io.spring.initializr.generator.language.Language;
 import io.spring.initializr.generator.language.java.JavaLanguage;
 import io.spring.initializr.generator.spring.AbstractComplianceTests;
 import io.spring.initializr.generator.test.project.ProjectStructure;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -52,6 +54,15 @@ class ApplicationPropertiesComplianceTests extends AbstractComplianceTests {
 				Arguments.arguments(ConfigurationFileFormat.forId(YamlFormat.ID), "application.yaml"));
 	}
 
+	static Stream<Arguments> sectionParameters() {
+		return parameters().flatMap((parameters) -> {
+			Object[] arguments = parameters.get();
+			return Stream.of(Arguments.arguments(arguments[0], arguments[1], SourceSet.TEST, null),
+					Arguments.arguments(arguments[0], arguments[1], SourceSet.MAIN, "dev"),
+					Arguments.arguments(arguments[0], arguments[1], SourceSet.TEST, "integration"));
+		});
+	}
+
 	@ParameterizedTest
 	@MethodSource("parameters")
 	void applicationPropertiesGenerated(ConfigurationFileFormat format, String fileName) {
@@ -74,8 +85,33 @@ class ApplicationPropertiesComplianceTests extends AbstractComplianceTests {
 			.hasSameContentAs(new ClassPathResource(path));
 	}
 
+	@ParameterizedTest
+	@MethodSource("sectionParameters")
+	void applicationPropertiesWithSectionProperties(ConfigurationFileFormat format, String fileName,
+			SourceSet sourceSet, @Nullable String profile) {
+		ProjectStructure project = generateProject(java, maven, "2.4.1",
+				(description) -> description.setConfigurationFileFormat(format),
+				(projectGenerationContext) -> projectGenerationContext.registerBean(
+						ApplicationPropertiesCustomizer.class,
+						() -> (properties) -> properties.section(sourceSet, profile)
+							.add("spring.application.name", "app-name")));
+		String path = "project/properties/" + format + "/" + getAssertFileName(fileName);
+		assertThat(project).textFile(getSectionFilePath(fileName, sourceSet, profile))
+			.as("Resource " + path)
+			.hasSameContentAs(new ClassPathResource(path));
+		assertThat(project).filePaths().contains("src/main/resources/%s".formatted(fileName));
+	}
+
 	private String getAssertFileName(String fileName) {
 		return fileName + ".gen";
+	}
+
+	private String getSectionFilePath(String fileName, SourceSet sourceSet, @Nullable String profile) {
+		int extensionSeparator = fileName.lastIndexOf('.');
+		String sectionFileName = (profile != null)
+				? fileName.substring(0, extensionSeparator) + "-" + profile + fileName.substring(extensionSeparator)
+				: fileName;
+		return "src/%s/resources/%s".formatted(sourceSet.getDirectoryName(), sectionFileName);
 	}
 
 }

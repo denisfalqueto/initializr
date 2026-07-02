@@ -19,6 +19,7 @@ package io.spring.initializr.generator.spring.properties;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import io.spring.initializr.generator.buildsystem.SourceSet;
 import io.spring.initializr.generator.test.project.ProjectStructure;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -53,6 +54,57 @@ class ApplicationPropertiesContributorTests {
 		assertThat(new ProjectStructure(this.directory)).textFile("src/main/resources/application.properties")
 			.lines()
 			.contains("spring.application.name=test");
+	}
+
+	@Test
+	void shouldWriteTestSourceSetPropertiesToTestResources() throws IOException {
+		ApplicationProperties properties = new ApplicationProperties();
+		properties.section(SourceSet.TEST, null).add("spring.datasource.url", "jdbc:h2:mem:test");
+		new ApplicationPropertiesContributor(properties).contribute(this.directory);
+		assertThat(new ProjectStructure(this.directory)).textFile("src/test/resources/application.properties")
+			.lines()
+			.contains("spring.datasource.url=jdbc:h2:mem:test");
+	}
+
+	@Test
+	void shouldWriteProfilePropertiesToProfileSpecificFile() throws IOException {
+		ApplicationProperties properties = new ApplicationProperties();
+		properties.section(SourceSet.MAIN, "dev").add("logging.level.root", "DEBUG");
+		new ApplicationPropertiesContributor(properties).contribute(this.directory);
+		assertThat(new ProjectStructure(this.directory)).textFile("src/main/resources/application-dev.properties")
+			.lines()
+			.contains("logging.level.root=DEBUG");
+	}
+
+	@Test
+	void shouldWriteTestSourceSetProfileProperties() throws IOException {
+		ApplicationProperties properties = new ApplicationProperties();
+		properties.section(SourceSet.TEST, "integration").add("spring.application.name", "it");
+		new ApplicationPropertiesContributor(properties).contribute(this.directory);
+		assertThat(new ProjectStructure(this.directory))
+			.textFile("src/test/resources/application-integration.properties")
+			.lines()
+			.contains("spring.application.name=it");
+	}
+
+	@Test
+	void shouldNotWriteFileForEmptySection() throws IOException {
+		ApplicationProperties properties = new ApplicationProperties();
+		properties.section(SourceSet.TEST, null);
+		new ApplicationPropertiesContributor(properties).contribute(this.directory);
+		assertThat(new ProjectStructure(this.directory)).filePaths()
+			.containsOnly("src/main/resources/application.properties");
+	}
+
+	@Test
+	void shouldAlwaysWriteMainDefaultFileEvenWhenOnlySectionsHaveProperties() throws IOException {
+		ApplicationProperties properties = new ApplicationProperties();
+		properties.section(SourceSet.MAIN, "dev").add("test", "value");
+		new ApplicationPropertiesContributor(properties).contribute(this.directory);
+		assertThat(new ProjectStructure(this.directory)).filePaths()
+			.containsOnly("src/main/resources/application.properties", "src/main/resources/application-dev.properties");
+		assertThat(new ProjectStructure(this.directory)).textFile("src/main/resources/application.properties")
+			.isEmpty();
 	}
 
 }

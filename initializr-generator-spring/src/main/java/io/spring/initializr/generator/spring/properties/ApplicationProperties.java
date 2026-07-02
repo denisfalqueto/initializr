@@ -18,9 +18,12 @@ package io.spring.initializr.generator.spring.properties;
 
 import java.io.PrintWriter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
+import io.spring.initializr.generator.buildsystem.SourceSet;
 import org.jspecify.annotations.Nullable;
 
 import org.springframework.util.Assert;
@@ -28,6 +31,11 @@ import org.springframework.util.StringUtils;
 
 /**
  * Application properties.
+ * <p>
+ * Properties added directly to this instance belong to the main source set and the
+ * default profile, and are written to {@code src/main/resources}. Properties for another
+ * source set or Spring profile can be added to the {@link #section(SourceSet, String)
+ * matching section}.
  *
  * @author Moritz Halbritter
  * @author Rodrigo Mibielli Peixoto
@@ -37,6 +45,57 @@ public class ApplicationProperties {
 	private static final String YAML_SPACE = "  ";
 
 	private final Map<String, Object> properties = new HashMap<>();
+
+	private final Map<SectionKey, ApplicationProperties> sections = new LinkedHashMap<>();
+
+	private final boolean root;
+
+	/**
+	 * Creates the application properties of the main source set and the default profile.
+	 */
+	public ApplicationProperties() {
+		this(true);
+	}
+
+	private ApplicationProperties(boolean root) {
+		this.root = root;
+	}
+
+	/**
+	 * Returns the application properties for the given source set and profile, creating
+	 * the section if necessary. Calling this method with {@link SourceSet#MAIN} and a
+	 * {@code null} profile returns this instance.
+	 * @param sourceSet the source set the properties belong to
+	 * @param profile the Spring profile the properties belong to, or {@code null} for the
+	 * default profile
+	 * @return the application properties for the given source set and profile
+	 * @throws IllegalStateException if called on a section rather than on the root
+	 * application properties
+	 */
+	public ApplicationProperties section(SourceSet sourceSet, @Nullable String profile) {
+		Assert.notNull(sourceSet, "'sourceSet' must not be null");
+		Assert.state(this.root, "Sections cannot be nested");
+		if (profile != null) {
+			Assert.hasText(profile, "'profile' must not be empty");
+		}
+		if (sourceSet == SourceSet.MAIN && profile == null) {
+			return this;
+		}
+		return this.sections.computeIfAbsent(new SectionKey(sourceSet, profile),
+				(key) -> new ApplicationProperties(false));
+	}
+
+	/**
+	 * Returns the application properties for the given source set and the default
+	 * profile, creating the section if necessary.
+	 * @param sourceSet the source set the properties belong to
+	 * @return the application properties for the given source set
+	 * @throws IllegalStateException if called on a section rather than on the root
+	 * application properties
+	 */
+	public ApplicationProperties section(SourceSet sourceSet) {
+		return section(sourceSet, null);
+	}
 
 	/**
 	 * Adds a new property.
@@ -196,6 +255,24 @@ public class ApplicationProperties {
 	private void add(String key, Object value) {
 		Assert.state(!this.properties.containsKey(key), () -> "Property '%s' already exists".formatted(key));
 		this.properties.put(key, value);
+	}
+
+	boolean isEmpty() {
+		return this.properties.isEmpty();
+	}
+
+	Map<SectionKey, ApplicationProperties> getSections() {
+		return Collections.unmodifiableMap(this.sections);
+	}
+
+	/**
+	 * The source set and profile a section of application properties belongs to.
+	 *
+	 * @param sourceSet the source set the properties belong to
+	 * @param profile the Spring profile the properties belong to, or {@code null} for the
+	 * default profile
+	 */
+	record SectionKey(SourceSet sourceSet, @Nullable String profile) {
 	}
 
 }

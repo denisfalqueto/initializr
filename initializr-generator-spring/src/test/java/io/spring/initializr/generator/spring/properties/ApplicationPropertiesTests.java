@@ -21,10 +21,12 @@ import java.io.StringWriter;
 import java.util.Collections;
 import java.util.List;
 
+import io.spring.initializr.generator.buildsystem.SourceSet;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 /**
@@ -151,6 +153,51 @@ class ApplicationPropertiesTests {
 		properties.add("test", false);
 		String written = writeProperties(properties);
 		assertThat(written).isEqualToIgnoringNewLines("test=false");
+	}
+
+	@Test
+	void sectionForMainSourceSetAndDefaultProfileReturnsRoot() {
+		ApplicationProperties properties = new ApplicationProperties();
+		assertThat(properties.section(SourceSet.MAIN, null)).isSameAs(properties);
+	}
+
+	@Test
+	void sectionReturnsSameInstanceForSameSourceSetAndProfile() {
+		ApplicationProperties properties = new ApplicationProperties();
+		ApplicationProperties section = properties.section(SourceSet.TEST, "integration");
+		assertThat(properties.section(SourceSet.TEST, "integration")).isSameAs(section);
+	}
+
+	@Test
+	void sectionKeepsPropertiesIsolated() {
+		ApplicationProperties properties = new ApplicationProperties();
+		properties.add("test", "main-value");
+		properties.section(SourceSet.TEST).add("test", "test-value");
+		assertThat(properties.get("test")).isEqualTo("main-value");
+		assertThat(properties.section(SourceSet.TEST).get("test")).isEqualTo("test-value");
+	}
+
+	@Test
+	void sectionsWithSameSourceSetAndDifferentProfilesAreIsolated() {
+		ApplicationProperties properties = new ApplicationProperties();
+		properties.section(SourceSet.MAIN, "dev").add("test", "dev-value");
+		properties.section(SourceSet.MAIN, "prod").add("test", "prod-value");
+		assertThat(properties.section(SourceSet.MAIN, "dev").get("test")).isEqualTo("dev-value");
+		assertThat(properties.section(SourceSet.MAIN, "prod").get("test")).isEqualTo("prod-value");
+	}
+
+	@Test
+	void sectionOfSectionThrows() {
+		ApplicationProperties properties = new ApplicationProperties();
+		ApplicationProperties section = properties.section(SourceSet.TEST, null);
+		assertThatIllegalStateException().isThrownBy(() -> section.section(SourceSet.MAIN, "dev"))
+			.withMessage("Sections cannot be nested");
+	}
+
+	@Test
+	void sectionWithEmptyProfileThrows() {
+		ApplicationProperties properties = new ApplicationProperties();
+		assertThatIllegalArgumentException().isThrownBy(() -> properties.section(SourceSet.MAIN, "  "));
 	}
 
 	@Test
