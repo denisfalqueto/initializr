@@ -56,7 +56,7 @@ class ApplicationPropertiesComplianceTests extends AbstractComplianceTests {
 
 	static Stream<Arguments> sectionParameters() {
 		return parameters().flatMap((parameters) -> {
-			Object[] arguments = parameters.get();
+			@Nullable Object[] arguments = parameters.get();
 			return Stream.of(Arguments.arguments(arguments[0], arguments[1], SourceSet.TEST, null),
 					Arguments.arguments(arguments[0], arguments[1], SourceSet.MAIN, "dev"),
 					Arguments.arguments(arguments[0], arguments[1], SourceSet.TEST, "integration"));
