@@ -20,6 +20,7 @@ import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.configuration.CompleteConfiguration;
 import javax.cache.configuration.MutableConfiguration;
+import javax.cache.expiry.Duration;
 
 import io.spring.initializr.generator.io.template.TemplateRenderer;
 import io.spring.initializr.metadata.DependencyMetadataProvider;
@@ -159,6 +160,9 @@ class InitializrAutoConfigurationTests {
 				assertThat(cacheManager.getCacheNames()).containsOnly("initializr.metadata",
 						"initializr.dependency-metadata", "initializr.project-resources", "initializr.templates");
 				assertThat(getConfiguration(cacheManager, "initializr.metadata").isStatisticsEnabled()).isTrue();
+				assertThat(getExpiryForCreation(cacheManager, "initializr.metadata")).isEqualTo(Duration.TEN_MINUTES);
+				assertThat(getExpiryForCreation(cacheManager, "initializr.dependency-metadata"))
+					.isEqualTo(Duration.TEN_MINUTES);
 			});
 	}
 
@@ -188,6 +192,10 @@ class InitializrAutoConfigurationTests {
 		assertThat(cache).isNotNull();
 		Cache<?, ?> nativeCache = (Cache<?, ?>) cache.getNativeCache();
 		return (CompleteConfiguration<?, ?>) nativeCache.getConfiguration(CompleteConfiguration.class);
+	}
+
+	private Duration getExpiryForCreation(JCacheCacheManager cacheManager, String cacheName) {
+		return getConfiguration(cacheManager, cacheName).getExpiryPolicyFactory().create().getExpiryForCreation();
 	}
 
 	@Configuration
