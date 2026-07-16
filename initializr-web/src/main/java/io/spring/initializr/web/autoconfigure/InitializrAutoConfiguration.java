@@ -200,7 +200,6 @@ public class InitializrAutoConfiguration {
 					() -> config().setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(Duration.TEN_MINUTES)));
 			createMissingCache(cacheManager, "initializr.dependency-metadata",
 					() -> config().setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(Duration.TEN_MINUTES)));
-			createMissingCache(cacheManager, "initializr.project-resources", this::config);
 			createMissingCache(cacheManager, "initializr.templates", this::config);
 		}
 

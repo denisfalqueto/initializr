@@ -158,7 +158,7 @@ class InitializrAutoConfigurationTests {
 					.hasSingleBean(JCacheCacheManager.class);
 				JCacheCacheManager cacheManager = context.getBean(JCacheCacheManager.class);
 				assertThat(cacheManager.getCacheNames()).containsOnly("initializr.metadata",
-						"initializr.dependency-metadata", "initializr.project-resources", "initializr.templates");
+						"initializr.dependency-metadata", "initializr.templates");
 				assertThat(getConfiguration(cacheManager, "initializr.metadata").isStatisticsEnabled()).isTrue();
 				assertThat(getExpiryForCreation(cacheManager, "initializr.metadata")).isEqualTo(Duration.TEN_MINUTES);
 				assertThat(getExpiryForCreation(cacheManager, "initializr.dependency-metadata"))
@@ -174,8 +174,7 @@ class InitializrAutoConfigurationTests {
 				assertThat(context).getBeans(JCacheManagerCustomizer.class).hasSize(2);
 				JCacheCacheManager cacheManager = context.getBean(JCacheCacheManager.class);
 				assertThat(cacheManager.getCacheNames()).containsOnly("initializr.metadata",
-						"initializr.dependency-metadata", "initializr.project-resources", "initializr.templates",
-						"custom.cache");
+						"initializr.dependency-metadata", "initializr.templates", "custom.cache");
 				assertThat(getConfiguration(cacheManager, "initializr.metadata").isStatisticsEnabled()).isFalse();
 			});
 	}
