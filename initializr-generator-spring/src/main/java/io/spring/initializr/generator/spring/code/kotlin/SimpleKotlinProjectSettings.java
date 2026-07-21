@@ -21,6 +21,8 @@ import java.util.List;
 
 import io.spring.initializr.generator.language.Language;
 import io.spring.initializr.generator.version.Version;
+import io.spring.initializr.generator.version.VersionParser;
+import io.spring.initializr.generator.version.VersionRange;
 
 /**
  * Commons settings for Kotlin projects.
@@ -30,7 +32,7 @@ import io.spring.initializr.generator.version.Version;
  */
 public class SimpleKotlinProjectSettings implements KotlinProjectSettings {
 
-	private static final Version KOTLIN_2_2_OR_LATER = Version.parse("2.2.0");
+	private static final VersionRange KOTLIN_2_2_AND_2_3 = VersionParser.DEFAULT.parseRange("[2.2.0,2.4.0)");
 
 	private final String version;
 
@@ -69,7 +71,7 @@ public class SimpleKotlinProjectSettings implements KotlinProjectSettings {
 	public List<String> getCompilerArgs() {
 		List<String> result = new ArrayList<>(KotlinProjectSettings.super.getCompilerArgs());
 		Version kotlinVersion = Version.parse(this.version);
-		if (kotlinVersion.compareTo(KOTLIN_2_2_OR_LATER) >= 0) {
+		if (KOTLIN_2_2_AND_2_3.match(kotlinVersion)) {
 			result.add("-Xannotation-default-target=param-property");
 		}
 		return result;

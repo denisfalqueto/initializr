@@ -16,7 +16,6 @@
 
 package io.spring.initializr.generator.spring.code.kotlin;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -29,15 +28,16 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class SimpleKotlinProjectSettingsTests {
 
-	@Test
-	void shouldUseDefaultFlags() {
-		SimpleKotlinProjectSettings settings = new SimpleKotlinProjectSettings("2.1.0", "17");
+	@ParameterizedTest
+	@ValueSource(strings = { "2.1.0", "2.4.0" })
+	void shouldUseDefaultFlags(String kotlinVersion) {
+		SimpleKotlinProjectSettings settings = new SimpleKotlinProjectSettings(kotlinVersion, "17");
 		assertThat(settings.getCompilerArgs()).containsExactly("-Xjsr305=strict");
 	}
 
 	@ParameterizedTest
 	@ValueSource(strings = { "2.2.0", "2.3.0" })
-	void shouldUseAnnotationDefaultTargetWhenUsingKotlin22OrLater(String kotlinVersion) {
+	void shouldUseAnnotationDefaultTargetWhenUsingKotlin22OrKotlin23(String kotlinVersion) {
 		SimpleKotlinProjectSettings settings = new SimpleKotlinProjectSettings(kotlinVersion, "17");
 		assertThat(settings.getCompilerArgs()).containsExactlyInAnyOrder("-Xjsr305=strict",
 				"-Xannotation-default-target=param-property");
